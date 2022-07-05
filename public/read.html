@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CSV_Reader</title>
+  <!-- CSS only -->
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/css/bootstrap.min.css" rel="stylesheet"
+      integrity="sha384-0evHe/X+R7YkIZDRvuzKMRqM+OrBnVFBL6DOitfPri4tjfHxaWutUpFmBp4vmVor" crossorigin="anonymous">
+  <link href="https://unpkg.com/tabulator-tables/dist/css/tabulator.min.css" rel="stylesheet">
+</head>
+<body>
+
+    <div class="container py-4">
+        <h1>Read CSV</h1>
+        <label for="file">Choose file to read</label>
+        <input type="file" class="form-control" name="file" id="file" />
+        <button class="btn btn-warning mt-2" id="submitFile">Read</button>
+        <div class="mt-2" id="csvTable"></div>
+        
+    </div>
+      <!-- JavaScript Bundle with Popper -->
+      <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0-beta1/dist/js/bootstrap.bundle.min.js" 
+              integrity="sha384-pprn3073KE6tl6bjs2QrFaJGz5/SUsLqktiwsUTF55Jfv3qYSDhgCecCxMW52nD2" crossorigin="anonymous"></script>
+      
+      <!-- we are using a Tabulator to built our table -->
+      <script type="text/javascript" src="https://unpkg.com/tabulator-tables/dist/js/tabulator.min.js"></script>
+      
+
+
+
+      
+      <script>
+        //get the element by it's id
+        const fileInput = document.getElementById('file')
+        const submitFile = document.getElementById('submitFile')
+        let file = null
+    
+        fileInput.addEventListener('change', function () {
+          file = this.files[0]
+        })
+    
+        // Validate file wether it is csv or not
+        submitFile.addEventListener('click', function () {
+          if (!file || file.type !== 'text/csv') {
+            alert('Please choose a CSV file')
+            return
+          }
+          
+          //Now we will append file with formdata to use in JS
+          const formData = new FormData()
+          formData.append('file', file)
+          
+          //fetching data or file from submit button
+          fetch('/read', {
+            method: 'POST',
+            body: formData
+          })
+          .then((response) => response.json())
+          .then(({ data }) => {
+            if (data.length) {
+              //getting rows and columns of file
+              const columns = data[0]
+              const rows = data.splice(1).map((arr) => {
+                const obj = {}
+                columns.forEach((column, index) => {
+                  obj[column] = arr[index]
+                })
+                return obj
+              })
+    
+              console.log(rows, columns)
+              
+              //setting height and column using Tabulator
+              const table = new Tabulator("#csvTable", {
+                height:"300px",
+                data: rows,
+                autoColumns: true
+              });
+            } else {
+              alert('The CSV is empty')
+            }
+          })
+          .catch((e) => alert("check something",e.message))
+        })
+      </script>
+</body>
+</html>
